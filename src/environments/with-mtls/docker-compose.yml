@@ -1,0 +1,284 @@
+---
+version: '3.8'
+services:
+  zookeeper1:
+    container_name: zookeeper1
+    image: confluentinc/cp-zookeeper:VERSION
+    restart: on-failure:3
+    hostname: 'zookeeper1'
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
+      KAFKA_JMX_PORT: 9999
+    volumes:
+      - /tmp/cpdocker/volumes/secrets:/etc/kafka/secrets
+      - zookeeper1-data:/var/lib/zookeeper/data
+      - zookeeper1-txn-logs:/var/lib/zookeeper/log
+
+  zookeeper2:
+    container_name: zookeeper2
+    image: confluentinc/cp-zookeeper:VERSION
+    restart: on-failure:3
+    hostname: 'zookeeper2'
+    ports:
+      - "12181:12181"
+      - "12888:12888"
+    environment:
+      ZOOKEEPER_SERVER_ID: 2
+      ZOOKEEPER_CLIENT_PORT: 12181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
+      KAFKA_JMX_PORT: 9999
+    volumes:
+      - /tmp/cpdocker/volumes/secrets:/etc/kafka/secrets
+      - zookeeper2-data:/var/lib/zookeeper/data
+      - zookeeper2-txn-logs:/var/lib/zookeeper/log
+
+  zookeeper3:
+    container_name: zookeeper3
+    image: confluentinc/cp-zookeeper:VERSION
+    restart: on-failure:3
+    hostname: 'zookeeper3'
+    ports:
+      - "22181:22181"
+      - "22888:22888"
+    environment:
+      ZOOKEEPER_SERVER_ID: 3
+      ZOOKEEPER_CLIENT_PORT: 22181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
+      KAFKA_JMX_PORT: 9999
+    volumes:
+      - /tmp/cpdocker/volumes/secrets:/etc/kafka/secrets
+      - zookeeper3-data:/var/lib/zookeeper/data
+      - zookeeper3-txn-logs:/var/lib/zookeeper/log
+
+  kafka1:
+    container_name: kafka1
+    image: confluentinc/cp-kafka:VERSION
+    hostname: 'kafka1'
+    ports:
+      - "9092:9092"
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper3:22181
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka1:9092
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.kafka1.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: kafka1_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: kafka1_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.kafka1.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: kafka1_truststore_creds
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+      KAFKA_SSL_CLIENT_AUTH: "required"
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ""
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9]*).*$$/$$1/ , DEFAULT
+      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3;User:admintool"
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_JMX_PORT: 9999
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - /tmp/cpdocker/volumes/secrets:/etc/kafka/secrets
+      - kafka1-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+
+  kafka2:
+    container_name: kafka2
+    image: confluentinc/cp-kafka:VERSION
+    hostname: 'kafka2'
+    ports:
+      - "19092:9092"
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper3:22181
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka2:19092
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.kafka2.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: kafka2_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: kafka2_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.kafka2.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: kafka2_truststore_creds
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+      KAFKA_SSL_CLIENT_AUTH: "required"
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ""
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9]*).*$$/$$1/ , DEFAULT
+      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3;User:admintool"
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_JMX_PORT: 9999
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - /tmp/cpdocker/volumes/secrets:/etc/kafka/secrets
+      - kafka2-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+
+  kafka3:
+    container_name: kafka3
+    image: confluentinc/cp-kafka:VERSION
+    hostname: 'kafka3'
+    ports:
+      - "29092:29092"
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper3:22181
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka3:29092
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.kafka3.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: kafka3_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: kafka3_sslkey_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.kafka3.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: kafka3_truststore_creds
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+      KAFKA_SSL_CLIENT_AUTH: "required"
+      KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: ""
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9]*).*$$/$$1/ , DEFAULT
+      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3;User:admintool"
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_JMX_PORT: 9999
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - /tmp/cpdocker/volumes/secrets:/etc/kafka/secrets
+      - kafka3-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+
+  schemaregistry:
+    image: confluentinc/cp-schema-registry:VERSION
+    container_name: schemaregistry
+    hostname: schemaregistry
+    ports:
+      - 8081:8081
+    restart: on-failure:3
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schemaregistry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: SSL
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.schemaregistry.truststore.jks
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_PASSWORD: confluent
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.schemaregistry.keystore.jks
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_PASSWORD: confluent
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEY_PASSWORD: confluent
+      SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: none
+      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
+      SCHEMA_REGISTRY_JMX_PORT: 9993
+    volumes:
+      - /tmp/cpdocker/volumes/kafka/secrets:/etc/kafka/secrets
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+
+  connect:
+    image: confluentinc/cp-kafka-connect:VERSION
+    container_name: connect
+    restart: on-failure:3
+    hostname: connect
+    ports:
+      - 8083:8083
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
+      CONNECT_SECURITY_PROTOCOL: SSL
+      CONNECT_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.connect.truststore.jks
+      CONNECT_SSL_TRUSTSTORE_PASSWORD: confluent
+      CONNECT_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.connect.keystore.jks
+      CONNECT_SSL_KEYSTORE_PASSWORD: confluent
+      CONNECT_SSL_KEY_PASSWORD: confluent
+      CONNECT_PRODUCER_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
+      CONNECT_PRODUCER_SECURITY_PROTOCOL: SSL
+      CONNECT_PRODUCER_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.connect.truststore.jks
+      CONNECT_PRODUCER_SSL_TRUSTSTORE_PASSWORD: confluent
+      CONNECT_PRODUCER_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.connect.keystore.jks
+      CONNECT_PRODUCER_SSL_KEYSTORE_PASSWORD: confluent
+      CONNECT_PRODUCER_SSL_KEY_PASSWORD: confluent
+      CONNECT_CONSUMER_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
+      CONNECT_CONSUMER_SECURITY_PROTOCOL: SSL
+      CONNECT_CONSUMER_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.connect.truststore.jks
+      CONNECT_CONSUMER_SSL_TRUSTSTORE_PASSWORD: confluent
+      CONNECT_CONSUMER_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.connect.keystore.jks
+      CONNECT_CONSUMER_SSL_KEYSTORE_PASSWORD: confluent
+      CONNECT_CONSUMER_SSL_KEY_PASSWORD: confluent
+      CONNECT_GROUP_ID: kafka-connect
+      CONNECT_REST_PORT: 8083
+      CONNECT_LISTENERS: http://0.0.0.0:8083
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-statuses
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+      CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
+      CONNECT_LOG4J_LOGGERS: org.reflections=ERROR
+      KAFKA_JMX_PORT: 9992
+    volumes:
+      - /tmp/cpdocker/volumes/kafka/secrets:/etc/kafka/secrets
+      - kafka-connect:/usr/share/confluent-hub-components
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+      - schemaregistry
+
+  restproxy:
+    image: confluentinc/cp-kafka-rest:VERSION
+    ports:
+      - 8082:8082
+    hostname: restproxy
+    container_name: restproxy
+    environment:
+      KAFKA_REST_HOST_NAME: restproxy
+      KAFKA_REST_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
+      KAFKA_REST_CLIENT_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
+      KAFKA_REST_CLIENT_SECURITY_PROTOCOL: SSL
+      KAFKA_REST_CLIENT_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.restproxy.truststore.jks
+      KAFKA_REST_CLIENT_SSL_TRUSTSTORE_PASSWORD: confluent
+      KAFKA_REST_CLIENT_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.restproxy.keystore.jks
+      KAFKA_REST_CLIENT_SSL_KEYSTORE_PASSWORD: confluent
+      KAFKA_REST_CLIENT_SSL_KEY_PASSWORD: confluent
+      KAFKA_REST_LISTENERS: http://0.0.0.0:8082
+      KAFKA_REST_JMX_PORT: 9991
+    volumes:
+      - /tmp/cpdocker/volumes/kafka/secrets:/etc/kafka/secrets
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+      - schemaregistry
+
+volumes:
+  zookeeper1-data:
+  zookeeper1-txn-logs:
+  zookeeper2-data:
+  zookeeper2-txn-logs:
+  zookeeper3-data:
+  zookeeper3-txn-logs:
+  kafka1-data:
+  kafka2-data:
+  kafka3-data:
+  kafka-connect:

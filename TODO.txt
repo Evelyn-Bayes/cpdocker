@@ -1,0 +1,4 @@
+1. Add Confluent Control Center and KsqlDB to the with-mtls environment.
+2. Automate building the custom environment
+3. Automatically build secrets
+4. Automate cleanup of custom images

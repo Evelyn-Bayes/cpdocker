@@ -1,0 +1,8 @@
+ARG IMAGE
+ARG VERSION
+
+FROM confluentinc/$IMAGE:$VERSION
+
+USER root
+RUN yum install -y procps
+USER appuser

@@ -1,0 +1,67 @@
+#!/bin/bash
+
+COMMAND="Usage: cpdocker { up | start| stop | rm | cleanup | load | commands }"
+### The below will be deleted on cleanup, so be careful of changing it ###
+WORK_DIR=/tmp/cpdocker
+PACKAGE_DIR=/usr/local/opt/cpdocker
+#########################################################################
+ENVIRONMENTS=$(ls ${PACKAGE_DIR}/environments/ | grep -v current)
+
+if [ $# -lt 1 ];
+then
+        echo ${COMMAND}
+        exit 1
+fi
+
+print_load_message_and_exit () {
+    echo "Example load command: cpdocker load basic 6.0.1"
+    echo "Available environments are:" ${ENVIRONMENTS}
+    exit 1
+}
+
+if [ ! -d ${WORK_DIR} ] && [ "$1" != "load" ]; then
+    echo "First, you need to load an environment using cpdocker load <ENVIRONMENT> <VERSION>"
+    print_load_message_and_exit
+fi
+
+case "$1" in
+        up)
+            docker-compose -f ${WORK_DIR}/docker-compose.yml up -d "${@:2}"
+            ;;
+         
+        start)
+            docker-compose -f ${WORK_DIR}/docker-compose.yml start "${@:2}"
+            ;;
+
+        stop)
+            docker-compose -f ${WORK_DIR}/docker-compose.yml stop "${@:2}"
+            ;;
+         
+        rm)
+            docker-compose -f ${WORK_DIR}/docker-compose.yml rm -fsv "${@:2}"
+            ;;
+         
+        cleanup)
+            docker-compose -f ${WORK_DIR}/docker-compose.yml down -v
+            rm -rf ${WORK_DIR}
+            ;;
+         
+        load)
+            if [ "$#" != 3 ] || [ ! -d ${PACKAGE_DIR}/environments/$2 ]; then
+                print_load_message_and_exit
+            fi
+            rm -rf ${WORK_DIR}
+            mkdir -p ${WORK_DIR}
+            cp ${PACKAGE_DIR}/environments/$2/COMMANDS.txt ${WORK_DIR}/
+            cat ${PACKAGE_DIR}/environments/$2/docker-compose.yml | sed "s/VERSION/$3/g" >> ${WORK_DIR}/docker-compose.yml
+            cp -r ${PACKAGE_DIR}/volumes ${WORK_DIR}/volumes
+            ;;
+         
+        commands)
+            less ${WORK_DIR}/COMMANDS.txt
+            ;;
+         
+        *)
+            echo $COMMAND
+            exit 1
+esac

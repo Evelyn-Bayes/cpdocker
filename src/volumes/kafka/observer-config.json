@@ -1,0 +1,32 @@
+{
+    "version": 1,
+    "replicas": [
+        {
+            "count": 2,
+            "constraints": {
+                "rack": "dc"
+            }
+        },
+        {
+            "count": 2,
+            "constraints": {
+                "rack": "dc-west"
+            }
+        }
+    ],
+    "observers": [
+        {
+            "count": 1,
+            "constraints": {
+                "rack": "dc-observer"
+            }
+        },
+        {
+            "count": 1,
+            "constraints": {
+                "rack": "dc-observer-west"
+            }
+        }
+    ]
+}
+

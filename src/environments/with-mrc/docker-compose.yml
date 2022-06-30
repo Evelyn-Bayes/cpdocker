@@ -1,0 +1,282 @@
+---
+version: '3.8'
+services:
+  zookeeper1:
+    container_name: zookeeper1
+    image: confluentinc/cp-zookeeper:VERSION
+    restart: on-failure:3
+    hostname: zookeeper1
+    ports:
+      - 2181:2181
+      - 2888:2888
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper-central:22888:23888;zookeeper1-west:32888:33888;zookeeper2-west:42888:43888
+      KAFKA_JMX_PORT: 9999
+    volumes:
+      - zookeeper1-data:/var/lib/zookeeper/data
+      - zookeeper1-txn-logs:/var/lib/zookeeper/log
+
+  zookeeper2:
+    container_name: zookeeper2
+    image: confluentinc/cp-zookeeper:VERSION
+    restart: on-failure:3
+    hostname: zookeeper2
+    ports:
+      - 12181:12181
+      - 12888:12888
+    environment:
+      ZOOKEEPER_SERVER_ID: 2
+      ZOOKEEPER_CLIENT_PORT: 12181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper-central:22888:23888;zookeeper1-west:32888:33888;zookeeper2-west:42888:43888
+      KAFKA_JMX_PORT: 9998
+    volumes:
+      - zookeeper2-data:/var/lib/zookeeper/data
+      - zookeeper2-txn-logs:/var/lib/zookeeper/log
+
+  zookeeper-central:
+    container_name: zookeeper-central
+    image: confluentinc/cp-zookeeper:VERSION
+    restart: on-failure:3
+    hostname: zookeeper-central
+    ports:
+      - 22181:22181
+      - 22888:22888
+    environment:
+      ZOOKEEPER_SERVER_ID: 3
+      ZOOKEEPER_CLIENT_PORT: 22181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper-central:22888:23888;zookeeper1-west:32888:33888;zookeeper2-west:42888:43888
+      KAFKA_JMX_PORT: 9997
+    volumes:
+      - zookeeper-central-data:/var/lib/zookeeper/data
+      - zookeeper-central-txn-logs:/var/lib/zookeeper/log
+
+  zookeeper1-west:
+    container_name: zookeeper1-west
+    image: confluentinc/cp-zookeeper:VERSION
+    restart: on-failure:3
+    hostname: zookeeper1-west
+    ports:
+      - 32181:32181
+      - 32888:32888
+    environment:
+      ZOOKEEPER_SERVER_ID: 4
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper-central:22888:23888;zookeeper1-west:32888:33888;zookeeper2-west:42888:43888
+      KAFKA_JMX_PORT: 9996
+    volumes:
+      - zookeeper1-west-data:/var/lib/zookeeper/data
+      - zookeeper1-west-txn-logs:/var/lib/zookeeper/log
+
+  zookeeper2-west:
+    container_name: zookeeper2-west
+    image: confluentinc/cp-zookeeper:VERSION
+    restart: on-failure:3
+    hostname: zookeeper2-west
+    ports:
+      - 42181:42181
+      - 42888:42888
+    environment:
+      ZOOKEEPER_SERVER_ID: 5
+      ZOOKEEPER_CLIENT_PORT: 42181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper-central:22888:23888;zookeeper1-west:32888:33888;zookeeper2-west:42888:43888
+      KAFKA_JMX_PORT: 9995
+    volumes:
+      - zookeeper2-west-data:/var/lib/zookeeper/data
+      - zookeeper2-west-txn-logs:/var/lib/zookeeper/log
+
+  kafka1:
+    container_name: kafka1
+    image: confluentinc/cp-server:VERSION
+    hostname: kafka1
+    ports:
+      - 9092:9092
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper-central:22181,zookeeper1-west:32181,zookeeper2-west:42181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1,"replicas": [{"count": 2, "constraints": {"rack": "dc"}}, {"count": 2, "constraints": {"rack": "dc-west"}}], "observers": [{"count": 1, "constraints": {"rack": "dc-observer"}}, {"count": 1, "constraints": {"rack": "dc-observer-west"}}]}'
+      KAFKA_BROKER_RACK: dc
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
+      KAFKA_JMX_PORT: 9994
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - kafka1-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper-central
+      - zookeeper1-west
+      - zookeeper2-west
+
+  kafka2:
+    container_name: kafka2
+    image: confluentinc/cp-server:VERSION
+    hostname: kafka2
+    ports:
+      - 19092:19092
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper-central:22181,zookeeper1-west:32181,zookeeper2-west:42181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:19092
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1,"replicas": [{"count": 2, "constraints": {"rack": "dc"}}, {"count": 2, "constraints": {"rack": "dc-west"}}], "observers": [{"count": 1, "constraints": {"rack": "dc-observer"}}, {"count": 1, "constraints": {"rack": "dc-observer-west"}}]}'
+      KAFKA_BROKER_RACK: dc
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
+      KAFKA_JMX_PORT: 9993
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - kafka2-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper-central
+      - zookeeper1-west
+      - zookeeper2-west
+
+  kafka-observer:
+    container_name: kafka-observer
+    image: confluentinc/cp-server:VERSION
+    hostname: kafka-observer
+    ports:
+      - 29092:29092
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper-central:22181,zookeeper1-west:32181,zookeeper2-west:42181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-observer:29092
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1,"replicas": [{"count": 2, "constraints": {"rack": "dc"}}, {"count": 2, "constraints": {"rack": "dc-west"}}], "observers": [{"count": 1, "constraints": {"rack": "dc-observer"}}, {"count": 1, "constraints": {"rack": "dc-observer-west"}}]}'
+      KAFKA_BROKER_RACK: dc-observer
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
+      KAFKA_JMX_PORT: 9992
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - kafka-observer-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper-central
+      - zookeeper1-west
+      - zookeeper2-west
+
+  kafka1-west:
+    container_name: kafka1-west
+    image: confluentinc/cp-server:VERSION
+    hostname: kafka1-west
+    ports:
+      - 39092:39092
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 4
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper-central:22181,zookeeper1-west:32181,zookeeper2-west:42181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1-west:39092
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1,"replicas": [{"count": 2, "constraints": {"rack": "dc"}}, {"count": 2, "constraints": {"rack": "dc-west"}}], "observers": [{"count": 1, "constraints": {"rack": "dc-observer"}}, {"count": 1, "constraints": {"rack": "dc-observer-west"}}]}'
+      KAFKA_BROKER_RACK: dc-west
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
+      KAFKA_JMX_PORT: 9991
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - kafka1-west-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper-central
+      - zookeeper1-west
+      - zookeeper2-west
+
+  kafka2-west:
+    container_name: kafka2-west
+    image: confluentinc/cp-server:VERSION
+    hostname: kafka2-west
+    ports:
+      - 49092:49092
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 5
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper-central:22181,zookeeper1-west:32181,zookeeper2-west:42181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2-west:49092
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1,"replicas": [{"count": 2, "constraints": {"rack": "dc"}}, {"count": 2, "constraints": {"rack": "dc-west"}}], "observers": [{"count": 1, "constraints": {"rack": "dc-observer"}}, {"count": 1, "constraints": {"rack": "dc-observer-west"}}]}'
+      KAFKA_BROKER_RACK: dc-west
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
+      KAFKA_JMX_PORT: 9990
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - kafka2-west-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper-central
+      - zookeeper1-west
+      - zookeeper2-west
+
+  kafka-observer-west:
+    container_name: kafka-observer-west
+    image: confluentinc/cp-server:VERSION
+    hostname: kafka-observer-west
+    ports:
+      - 59092:59092
+    restart: on-failure:3
+    environment:
+      KAFKA_BROKER_ID: 6
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper-central:22181,zookeeper1-west:32181,zookeeper2-west:42181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-observer-west:59092
+      KAFKA_REPLICA_SELECTOR_CLASS: org.apache.kafka.common.replica.RackAwareReplicaSelector
+      KAFKA_CONFLUENT_LOG_PLACEMENT_CONSTRAINTS: '{"version": 1,"replicas": [{"count": 2, "constraints": {"rack": "dc"}}, {"count": 2, "constraints": {"rack": "dc-west"}}], "observers": [{"count": 1, "constraints": {"rack": "dc-observer"}}, {"count": 1, "constraints": {"rack": "dc-observer-west"}}]}'
+      KAFKA_BROKER_RACK: dc-observer-west
+      KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
+      KAFKA_JMX_PORT: 9989
+    volumes:
+      - /tmp/cpdocker/volumes/kafka:/volumes
+      - kafka-observer-west-data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper-central
+      - zookeeper1-west
+      - zookeeper2-west
+
+volumes:
+  zookeeper1-data:
+  zookeeper1-txn-logs:
+  zookeeper2-data:
+  zookeeper2-txn-logs:
+  zookeeper-central-data:
+  zookeeper-central-txn-logs:
+  zookeeper1-west-data:
+  zookeeper1-west-txn-logs:
+  zookeeper2-west-data:
+  zookeeper2-west-txn-logs:
+  kafka1-data:
+  kafka2-data:
+  kafka-observer-data:
+  kafka1-west-data:
+  kafka2-west-data:
+  kafka-observer-west-data:

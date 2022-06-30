@@ -1,0 +1,28 @@
+#!/bin/bash
+
+INSTALL_FROM_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PACKAGE_DIR=/usr/local/opt/cpdocker
+COMMAND_LOCATION=/usr/local/bin/cpdocker
+WORK_DIR=/tmp/cpdocker
+
+delete_prior_version () {
+    rm -f ${COMMAND_LOCATION}
+    rm -fr ${PACKAGE_DIR}
+    rm -fr ${WORK_DIR}
+}
+
+# CLeanup old versions
+if [ -f "${COMMAND_LOCATION}" ] || [ -d "${PACKAGE_DIR}" ] || [ -d "${WORK_DIR}" ]; then
+    read -p "Do you wish to delete the old version of cpdocker and reinstall? " yn
+    case $yn in
+        [Yy]* ) delete_prior_version ;;
+        [Nn]* ) echo "Exiting!"; exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+fi
+
+cp ${INSTALL_FROM_DIR}/src/bin/cpdocker ${COMMAND_LOCATION}
+mkdir ${PACKAGE_DIR}
+cp -r ${INSTALL_FROM_DIR}/src/environments ${PACKAGE_DIR}
+cp -r ${INSTALL_FROM_DIR}/src/images ${PACKAGE_DIR}
+cp -r ${INSTALL_FROM_DIR}/src/volumes ${PACKAGE_DIR}
