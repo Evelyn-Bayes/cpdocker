@@ -18,6 +18,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
       KAFKA_JMX_PORT: 9999
     volumes:
+      - /tmp/cpdocker/volumes/zookeeper:/volumes
       - zookeeper1-data:/var/lib/zookeeper/data
       - zookeeper1-txn-logs:/var/lib/zookeeper/log
 
@@ -38,6 +39,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
       KAFKA_JMX_PORT: 9998
     volumes:
+      - /tmp/cpdocker/volumes/zookeeper:/volumes
       - zookeeper2-data:/var/lib/zookeeper/data
       - zookeeper2-txn-logs:/var/lib/zookeeper/log
 
@@ -58,6 +60,7 @@ services:
       ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
       KAFKA_JMX_PORT: 9997
     volumes:
+      - /tmp/cpdocker/volumes/zookeeper:/volumes
       - zookeeper3-data:/var/lib/zookeeper/data
       - zookeeper3-txn-logs:/var/lib/zookeeper/log
 
@@ -142,6 +145,8 @@ services:
       SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: none
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
       SCHEMA_REGISTRY_JMX_PORT: 9993
+    volumes:
+      - /tmp/cpdocker/volumes/schemaregistry:/volumes
     depends_on:
       - kafka1
       - kafka2
@@ -170,6 +175,7 @@ services:
       CONNECT_LOG4J_LOGGERS: org.reflections=ERROR
       KAFKA_JMX_PORT: 9992
     volumes:
+      - /tmp/cpdocker/volumes/connect:/volumes
       - kafka-connect:/usr/share/confluent-hub-components
     depends_on:
       - kafka1
@@ -187,6 +193,8 @@ services:
       KAFKA_REST_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
       KAFKA_REST_LISTENERS: http://0.0.0.0:8082
       KAFKA_REST_JMX_PORT: 9991
+    volumes:
+      - /tmp/cpdocker/volumes/restproxy:/volumes
     depends_on:
       - kafka1
       - kafka2
@@ -203,6 +211,7 @@ services:
       CONTROL_CENTER_REPLICATION_FACTOR: 3
       PORT: 9021
     volumes:
+      - /tmp/cpdocker/volumes/controlcenter:/volumes
       - confluent-control-center:/var/lib/confluent-control-center
     depends_on:
       - kafka1
@@ -217,15 +226,17 @@ services:
       - "8088:8088"
     environment:
       KSQL_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
+      KSQL_KSQL_SERVICE_ID: ksqldb
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schemaregistry:8081
       KSQL_LISTENERS: http://0.0.0.0:8088
-      KSQL_KSQL_STREAMS_STATE_DIR: /var/lib/ksqldb
       KSQL_JMX_PORT: 9990
     volumes:
-      - ksqldb:/var/lib/ksqldb
+      - /tmp/cpdocker/volumes/ksqldb:/volumes
     depends_on:
       - kafka1
       - kafka2
       - kafka3
+      - schemaregistry
 
 volumes:
   zookeeper1-data:
@@ -239,4 +250,3 @@ volumes:
   kafka3-data:
   kafka-connect:
   confluent-control-center:
-  ksqldb:

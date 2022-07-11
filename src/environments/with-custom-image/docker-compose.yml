@@ -217,11 +217,10 @@ services:
       - "8088:8088"
     environment:
       KSQL_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
+      KSQL_KSQL_SERVICE_ID: ksqldb
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schemaregistry:8081
       KSQL_LISTENERS: http://0.0.0.0:8088
-      KSQL_KSQL_STREAMS_STATE_DIR: /var/lib/ksqldb
       KSQL_JMX_PORT: 9990
-    volumes:
-      - ksqldb:/var/lib/ksqldb
     depends_on:
       - kafka1
       - kafka2
@@ -239,4 +238,3 @@ volumes:
   kafka3-data:
   kafka-connect:
   confluent-control-center:
-  ksqldb:

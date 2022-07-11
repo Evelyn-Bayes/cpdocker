@@ -1,0 +1,77 @@
+global:
+  scrape_interval: 60s
+  evaluation_interval: 15s
+  scrape_timeout: 30s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "zookeeper"
+    static_configs:
+      - targets:
+          - "zookeeper1:9999"
+          - "zookeeper2:9998"
+          - "zookeeper3:9997"
+        labels:
+          env: "PROD"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: hostname
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'
+
+
+  - job_name: "kafka-broker"
+    static_configs:
+      - targets:
+          - "kafka1:9996"
+          - "kafka2:9995"
+          - "kafka3:9994"
+        labels:
+          env: "PROD"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: hostname
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'
+
+
+  - job_name: "schema-registry"
+    static_configs:
+      - targets:
+          - "schemaregistry:9993"
+        labels:
+          env: "PROD"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: hostname
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'
+
+
+  - job_name: "kafka-connect"
+    static_configs:
+      - targets:
+          - "connect:9992"
+        labels:
+          env: "PROD"
+          kafka_connect_cluster_id: "kafka-connect"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: hostname
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'
+
+  - job_name: "ksqldb"
+    static_configs:
+      - targets:
+          - "ksqldb:9990"
+        labels:
+          env: "PROD"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: hostname
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'

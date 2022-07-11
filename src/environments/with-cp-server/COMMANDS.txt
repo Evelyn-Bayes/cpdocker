@@ -189,6 +189,15 @@ docker exec -ti controlcenter control-center-console-consumer /etc/confluent-con
 Consume records for the given Control Center topic
 
 ################################################################################
+                              KsqlDB
+################################################################################
+##### Command
+docker exec -ti ksqldb bash
+nohup /volumes/generate-clickstream-data.sh &
+##### Documentation
+Use KsqlDB to create a clickstream topic and generate data to it
+
+################################################################################
                          Confluent Server / Rest Proxy
 ################################################################################
 ##### Command
