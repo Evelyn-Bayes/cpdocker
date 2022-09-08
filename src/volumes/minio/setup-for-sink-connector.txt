@@ -1,0 +1,9 @@
+You'll need to run this from outside docker
+
+# Add the connector
+docker exec -ti connect sh -c "confluent-hub install --no-prompt confluentinc/kafka-connect-s3:latest"
+docker restart connect
+
+# Create the topic and generate records
+docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --create --topic s3-data --replication-factor 3 --partitions 10
+docker exec -ti kafka1 kafka-producer-perf-test --producer-props bootstrap.servers=kafka1:9092 --topic s3-data --throughput 100 --num-records 10000 --record-size 1000

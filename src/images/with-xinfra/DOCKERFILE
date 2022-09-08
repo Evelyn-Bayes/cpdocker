@@ -1,0 +1,11 @@
+FROM adoptopenjdk/openjdk11:alpine-slim
+RUN apk add bash
+
+WORKDIR /opt/kafka-monitor
+ADD src/build/ build/
+ADD src/bin/ bin/
+ADD src/config/ config/
+ADD src/docker/ docker/
+ADD src/webapp/ webapp/
+
+CMD ["/opt/kafka-monitor/docker/kafka-monitor-docker-entry.sh"]

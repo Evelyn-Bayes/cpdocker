@@ -1,0 +1,276 @@
+################################################################################
+                            Command Line Tools
+################################################################################
+##### Command
+docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --describe
+##### Documentation
+Describe all topics in the Kafka cluster
+
+##### Command
+docker exec -ti kafka1 kafka-console-producer --broker-list kafka1:9092 --topic <TOPIC>
+##### Documentation
+Produce to a topic using the commandline
+
+##### Command
+docker exec -ti kafka1 kafka-console-producer --broker-list kafka1:9092 --property "parse.key=true" --property "key.separator=:" --topic <TOPIC>
+##### Documentation
+Produce to a topic using the commandline including a key and value
+An example of a record is Example-Key:Example-Value
+
+##### Command
+docker exec -ti kafka1 kafka-producer-perf-test --producer-props bootstrap.servers=kafka1:9092 --topic <TOPIC> --throughput <THROUGHPUT> --num-records <NUM-RECORDS> --record-size <SIZE>
+##### Documentation
+Produces a stream of records
+
+##### Command
+docker exec -ti kafka1 kafka-console-consumer --bootstrap-server kafka1:9092 --from-beginning --property "print.key=true" --topic <TOPIC>
+##### Documentation
+Consumes all records in a topic and prints both key and value
+
+##### Command
+docker exec -ti kafka1 kafka-configs --bootstrap-server kafka1:9092 --alter  --topic <TOPIC> --add-config <CONFIG=VALUE>
+##### Documentation
+Alter or add a topic level override
+
+################################################################################
+                                 Zookeeper
+################################################################################
+##### Command
+docker exec -ti zookeeper1 zookeeper-shell zookeeper1:2181
+##### Documentation
+Start the Zookeeper shell
+
+##### Command
+docker exec -ti zookeeper1 zookeeper-shell zookeeper1:2181 get /controller
+##### Documentation
+List the current Kafka controller
+
+##### Command
+docker exec -ti zookeeper1 /bin/bash -c 'echo srvr | ncat zookeeper1 2181'
+##### Documentation
+Run the four letter word srvr which will list if the Zookeeper is a leader or follower
+
+################################################################################
+                               Kafka Connect
+################################################################################
+##### Command
+docker exec -ti connect confluent-hub install <CONNECTOR>
+##### Documentation
+Install a connector in the Kafka Connect image
+You must restart Kafka Connect for this to be picked up and you can do this with docker-compose restart connect
+
+##### Command
+docker exec -ti connect curl -vX PUT http://connect:8083/connectors/<NAME>/config --header "Content-Type: application/json" --data '{"connector.class": "<CLASS>", "tasks.max": "1", <INSERT-CONFIG-HERE>}'
+##### Documentation
+Create a connector
+
+##### Command
+docker exec -ti connect /bin/bash -c 'curl -vX POST http://connect:8083/connectors --header "Content-Type: application/json" --data @/volumes/<JSON-FILE>'
+##### Documentation
+Create a connector using a JSON file
+
+##### Command
+docker exec -ti connect curl -vX DELETE http://connect:8083/connectors/<NAME>
+##### Documentation
+Delete a connector
+
+##### Command
+docker exec -ti connect curl -vX GET http://connect:8083/connectors/
+##### Documentation
+List all connectors
+
+##### Command
+docker exec -ti connect curl -vX GET http://connect:8083/connectors/<NAME>/status
+##### Documentation
+Get the status of a connector
+
+################################################################################
+                                Connectors
+################################################################################
+##### File Source connector Command
+docker exec -ti connect curl -vX PUT http://connect:8083/connectors/<NAME>/config --header "Content-Type: application/json" --data '{"connector.class": "FileStreamSource", "tasks.max": "1", "file": "/tmp/file-source.txt", "topic": "<TOPIC>"}'
+##### Documentation
+Create a File Stream Source connector
+
+##### File Source connector Command
+docker exec -ti connect /bin/bash -c 'echo <VALUE> >> /tmp/file-source.txt'
+##### Documentation
+Generate records to the File Source connector
+
+##### File Sink connector Command
+docker exec -ti connect curl -vX PUT http://connect:8083/connectors/<NAME>/config --header "Content-Type: application/json" --data '{"connector.class": "FileStreamSink", "tasks.max": "1", "file": "/tmp/file-sink.txt", "topics": "<TOPIC>"}'
+##### Documentation
+Create a File Stream Sink connector
+
+################################################################################
+                              Schema Registry
+################################################################################
+##### Command
+docker exec -ti schemaregistry curl -X POST -H "Content-Type: application/vnd.schemaregistry.v1+json" http://schemaregistry:8081/subjects/<SUBJECT>/versions --data @<File>
+##### Documentation
+Create the schema from a json file or directly with the inline
+Sample command - docker exec -ti schemaregistry curl -vX POST -H "Content-Type: application/vnd.schemaregistry.v1+json" http://schemaregistry:8081/subjects/test/versions --data '{"schema": "{\"type\": \"record\", \"name\": \"test\", \"fields\": [{\"type\": \"string\", \"name\": \"field1\"}, {\"type\": \"int\", \"name\": \"field2\"}]}"}'
+
+##### Command
+docker exec -ti schemaregistry curl -X GET -H "Content-Type: application/vnd.schemaregistry.v1+json" http://schemaregistry:8081/subjects/<SUBJECT>/versions/<ID>
+##### Documentation
+Retrieve a schema by the combination of subject and version
+
+##### Command
+docker exec -ti schemaregistry curl -X GET -H "Content-Type: application/vnd.schemaregistry.v1+json" http://schemaregistry:8081/subjects/<SUBJECT>/versions
+##### Documentation
+Retrieve a list of versions available for a subject
+
+##### Command
+docker exec -ti schemaregistry curl -X GET -H "Content-Type: application/vnd.schemaregistry.v1+json" http://schemaregistry:8081/subjects
+##### Documentation
+Retrieve a list of subjects
+
+##### Command
+docker exec -ti schemaregistry curl -X GET -H "Content-Type: application/vnd.schemaregistry.v1+json" http://schemaregistry:8081/schemas/ids/<ID>
+##### Documentation
+Retrieve a schema by ID
+
+##### Command
+docker exec -ti schemaregistry kafka-json-schema-console-producer --broker-list kafka1:9092 --property schema.registry.url=http://schemaregistry:8081 --topic test-json --property value.schema=<SCHEMA> --property key.schema=<SCHEMA> --property parse.key=true --property key.separator=|
+##### Documentation
+Use the commandline to produce JSON records to a topic including key and value
+Sample command - docker exec -ti schemaregistry kafka-json-schema-console-producer --broker-list kafka1:9092 --property schema.registry.url=http://schemaregistry:8081 --topic test-json --property value.schema='{"type":"object","properties":{"first-name":{"type":"string"}}}' --property key.schema='{"type":"object","properties":{"last-name":{"type":"string"}}}' --property parse.key=true --property key.separator='|'
+Sample input - {"last-name":"Bayes"}|{"first-name":"Evelyn"}
+
+##### Command
+docker exec -ti schemaregistry kafka-json-schema-console-consumer --bootstrap-server kafka1:9092 --property schema.registry.url=http://schemaregistry:8081 --topic test-json --property value.schema=<SCHEMA> --property key.schema=<SCHEMA> --property print.key=true --from-beginning
+##### Documentation
+Consumes all JSON records from a topic printing key and value
+Sample command - docker exec -ti schemaregistry kafka-json-schema-console-consumer --bootstrap-server kafka1:9092 --property schema.registry.url=http://schemaregistry:8081 --topic test-json --property value.schema='{"type":"object","properties":{"first-name":{"type":"string"}}}' --property key.schema='{"type":"object","properties":{"last-name":{"type":"string"}}}' --property print.key=true --from-beginning
+
+##### Command
+docker exec -ti kafka1 kafka-console-consumer --bootstrap-server kafka1:9092 --from-beginning --property print.key=true --timeout-ms 1000 --topic <TOPIC> 1> schemas.log
+docker exec -ti kafka1 kafka-console-producer --bootstrap-server kafka1:9092 --property parse.key=true --topic <TOPIC> < schemas.log
+##### Documentation
+Backup and restore of schemas topic
+
+################################################################################
+                                 Rest Proxy
+################################################################################
+##### Command
+docker exec -ti restproxy curl -X GET -H "Content-Type: application/vnd.kafka.v2+json" http://restproxy:8082/topics
+##### Documentation
+Returns a list of topics
+
+##### Command
+docker exec -ti restproxy curl -X POST -H "Content-Type: application/vnd.kafka.binary.v2+json" -H "Accept: application/vnd.kafka.v2+json, application/vnd.kafka+json, application/json" --data '{"records": [{"key": "<KEY>", "value": "<VALUE>", "partition": "<PARTITION>"}, {"value": "<VALUE2>"}]}' http://restproxy:8082/topics/<TOPIC>
+##### Documentation
+Produces a record/s to a topic
+The key and partition are optional and each additional record must be included in its own curly brackets inside the records list
+
+##### Command
+docker exec -ti restproxy curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" http://restproxy:8082/consumers/<CONSUMER_GROUP_ID>
+##### Documentation
+Create a new consumer group
+
+##### Command
+docker exec -ti restproxy curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" --data '{"topics": ["topic1", "topic2"]}' http://restproxy:8082/consumers/<CONSUMER_GROUP_ID>/instances/<INSTANCE>/subscription
+##### Documentation
+Subscribe a consumer to a list of topics
+The instance will be returned when creating the consumer group
+
+##### Command
+docker exec -ti restproxy curl -X GET -H "Content-Type: application/vnd.kafka.v2+json" http://restproxy:8082/consumers/<CONSUMER_GROUP_ID>/instances/<INSTANCE>/records
+##### Documentation
+Consume records for the given consumer group
+
+################################################################################
+                           Confluent Control Center
+################################################################################
+##### Command
+docker exec -ti controlcenter control-center-console-consumer /etc/confluent-control-center/control-center.properties --topic <TOPIC> --from-beginning
+##### Documentation
+Consume records for the given Control Center topic
+
+################################################################################
+                              KsqlDB
+################################################################################
+##### Command
+docker exec -ti ksqldb bash
+nohup /volumes/generate-clickstream-data.sh &
+##### Documentation
+Use KsqlDB to create a clickstream topic and generate data to it
+
+################################################################################
+                         Confluent Server / Rest Proxy
+################################################################################
+##### Command
+docker exec -ti kafka1 curl -X GET http://restproxy:8082/v3/clusters/
+##### Documentation
+Prints all cluster and details
+
+##### Command
+docker exec -ti kafka1 curl -X GET http://restproxy:8082/v3/clusters/<CLUSTER_ID>/acls
+##### Documentation
+Prints all ACLs for the cluster
+
+##### Command
+docker exec -ti kafka1 curl -X POST http://restproxy:8082/v3/clusters/<CLUSTER_ID>/acls --header 'Content-Type: application/json' --data-raw '<DATA>'
+##### Documentation
+Write ACL to cluster
+
+################################################################################
+                         Rare Command Line Tools
+################################################################################
+##### Command
+docker exec -ti kafka1 kafka-console-consumer --bootstrap-server kafka1:9092 --from-beginning --formatter "kafka.coordinator.group.GroupMetadataManager\$OffsetsMessageFormatter" --topic __consumer_offsets
+##### Documentation
+Consumes and formats all records in the consumer offsets topic
+
+##### Command
+docker exec -ti kafka1 kafka-configs --bootstrap-server kafka1:9092 --describe --entity-type broker-loggers --entity-name <BROKER_ID>
+##### Documenation
+List log levels for BROKER_ID
+
+##### Command
+docker exec -ti kafka1 kafka-configs --bootstrap-server kafka1:9092 --alter --add-config <LOGGER>=<LEVEL> --entity-type broker-loggers --entity-name <BROKER_ID>
+##### Documentation
+Set LOGGER class to log level LEVEL for BROKER_ID
+Example LOGGER is kafka.authorizer.logger for altering authorizer logging
+
+##### Command
+docker exec -ti kafka1 kafka-configs --bootstrap-server kafka1:9092 --entity-type brokers --entity-name <BROKER_ID> --add-config follower.replication.throttled.rate=<RATE> --alter
+docker exec -ti kafka1 kafka-configs --bootstrap-server kafka1:9092 --entity-type brokers --entity-name <BROKER_ID> --add-config follower.replication.throttled.replicas=* --alter
+##### Documentation
+Throttle all data replicated to BROKER_ID to <RATE> bytes per second
+This means if RATE is set to 1000000, all replica fetchers on BROKER_ID will be limited to a combined rate of 1mb/s
+This is useful when adding a broker with no data and stops it from consumer all the cluster resources blocking the clients
+As a note, this will only work if BROKER_ID is out of sync, otherwise it ignores the throttle
+
+##### Command
+docker exec -ti kafka1 confluent-rebalancer execute --bootstrap-server kafka1:9092 --metrics-bootstrap-server kafka1:9092 --throttle <RATE> --verbose
+docker exec -ti kafka1 confluent-rebalancer status --bootstrap-server kafka1:9092
+##### Documentation
+The first command initiates a rebalancer, the second checks its status
+You must have configured Confluent Metrics Reporter on the brokers.
+
+##### Command
+docker exec -ti kafka1 kafka-run-class kafka.tools.JmxTool --object-name '<JMX_METRIC>' --jmx-url service:jmx:rmi:///jndi/rmi://<HOST>:<PORT>/jmxrmi --reporting-interval 1000
+##### Documentation
+Print stream of JMX metrics to the console
+Sample JMX_METRIC kafka.server:type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent
+
+##### Command
+docker exec -ti kafka1 kafka-dump-log --deep-iteration --files /var/lib/kafka/data/<TOPIC>-<PARTITION>/<OFFSET_OF_LOG_FILE>.log
+#####
+Dumps the info from the log including the batch sizes and uncompressed sizes of each record
+
+################################################################################
+                            Observer Commands
+################################################################################
+##### Command
+docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --create --topic <TOPIC> --partitions <PARTITIONS> --replica-placement /volumes/observer-config.json
+##### Documentation
+Creates a topic based on the observer-config.json replication plan
+
+##### Command
+docker exec -ti kafka1 kafka-console-consumer --bootstrap-server kafka1:9092 --from-beginning --client.rack <RACK_ID> --topic <TOPIC>
+##### Documentation
+Consumes from the brokers identified by RACK_ID
+Use either region-a for the primary replicas or region-b for the observers
