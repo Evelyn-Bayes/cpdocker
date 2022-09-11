@@ -1,0 +1,12 @@
+{
+  "name":"test_mirrormaker2_heartbeat",
+  "config": {
+    "connector.class": "org.apache.kafka.connect.mirror.MirrorHeartbeatConnector",
+    "name":"test_mirrormaker2_heartbeat",
+    "source.cluster.alias":"source",
+    "source.cluster.bootstrap.servers":"kafka1:9092",
+    "target.cluster.bootstrap.servers":"kafka2:19092",
+    "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
+  }
+}

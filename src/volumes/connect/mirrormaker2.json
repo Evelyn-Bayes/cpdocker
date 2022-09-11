@@ -1,0 +1,14 @@
+{
+  "name":"test_mirrormaker2",
+  "config": {
+    "connector.class": "org.apache.kafka.connect.mirror.MirrorSourceConnector",
+    "name":"test_mirrormaker2",
+    "source.cluster.alias":"source",
+    "topics":"test_topic",
+    "source.cluster.bootstrap.servers":"kafka1:9092",
+    "target.cluster.bootstrap.servers":"kafka2:19092",
+    "offset-syncs.topic.replication.factor":"1",
+    "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
+  }
+}

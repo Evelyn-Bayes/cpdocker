@@ -1,0 +1,13 @@
+{
+  "name":"test_mirrormaker2_checkpoints",
+  "config": {
+    "connector.class": "org.apache.kafka.connect.mirror.MirrorCheckpointConnector",
+    "name":"test_mirrormaker2_checkpoints",
+    "source.cluster.alias":"source",
+    "source.cluster.bootstrap.servers":"kafka1:9092",
+    "target.cluster.bootstrap.servers":"kafka2:19092",
+    "sync.group.offsets.enabled": "true",
+    "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
+  }
+}
