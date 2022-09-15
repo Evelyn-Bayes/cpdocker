@@ -1,65 +1,22 @@
 ---
 version: '3.8'
 services:
-  zookeeper1:
-    container_name: zookeeper1
+  zookeeper:
+    container_name: zookeeper
     image: confluentinc/cp-zookeeper:VERSION
     restart: on-failure:3
-    hostname: zookeeper1
+    hostname: zookeeper
     ports:
       - 2181:2181
-      - 2888:2888
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
-      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
-      KAFKA_JMX_PORT: 9999
     volumes:
-      - zookeeper1-data:/var/lib/zookeeper/data
-      - zookeeper1-txn-logs:/var/lib/zookeeper/log
-
-  zookeeper2:
-    container_name: zookeeper2
-    image: confluentinc/cp-zookeeper:VERSION
-    restart: on-failure:3
-    hostname: zookeeper2
-    ports:
-      - 12181:12181
-      - 12888:12888
-    environment:
-      ZOOKEEPER_SERVER_ID: 2
-      ZOOKEEPER_CLIENT_PORT: 12181
-      ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_INIT_LIMIT: 5
-      ZOOKEEPER_SYNC_LIMIT: 2
-      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
-      KAFKA_JMX_PORT: 9998
-    volumes:
-      - zookeeper2-data:/var/lib/zookeeper/data
-      - zookeeper2-txn-logs:/var/lib/zookeeper/log
-
-  zookeeper3:
-    container_name: zookeeper3
-    image: confluentinc/cp-zookeeper:VERSION
-    restart: on-failure:3
-    hostname: zookeeper3
-    ports:
-      - 22181:22181
-      - 22888:22888
-    environment:
-      ZOOKEEPER_SERVER_ID: 3
-      ZOOKEEPER_CLIENT_PORT: 22181
-      ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_INIT_LIMIT: 5
-      ZOOKEEPER_SYNC_LIMIT: 2
-      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
-      KAFKA_JMX_PORT: 9997
-    volumes:
-      - zookeeper3-data:/var/lib/zookeeper/data
-      - zookeeper3-txn-logs:/var/lib/zookeeper/log
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-txn-logs:/var/lib/zookeeper/log
 
   kafka1:
     container_name: kafka1
@@ -70,21 +27,18 @@ services:
     restart: on-failure:3
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper3:22181
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
       KAFKA_CONFLUENT_LICENSE: ${CONFLUENT_LICENSE}
       KAFKA_CONFLUENT_TELEMETRY_ENABLED: "false"
       KAFKA_CONFLUENT_REPORTERS_TELEMETRY_AUTO_ENABLE: "false"
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
-      KAFKA_JMX_PORT: 9996
     volumes:
       - /tmp/cpdocker/volumes/kafka/config:/volumes
       - kafka1-data:/var/lib/kafka/data
     depends_on:
-      - zookeeper1
-      - zookeeper2
-      - zookeeper3
+      - zookeeper
 
   kafka2:
     container_name: kafka2
@@ -95,21 +49,18 @@ services:
     restart: on-failure:3
     environment:
       KAFKA_BROKER_ID: 2
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper3:22181
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:19092
       KAFKA_CONFLUENT_LICENSE: ${CONFLUENT_LICENSE}
       KAFKA_CONFLUENT_TELEMETRY_ENABLED: "false"
       KAFKA_CONFLUENT_REPORTERS_TELEMETRY_AUTO_ENABLE: "false"
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
-      KAFKA_JMX_PORT: 9995
     volumes:
       - /tmp/cpdocker/volumes/kafka/config:/volumes
       - kafka2-data:/var/lib/kafka/data
     depends_on:
-      - zookeeper1
-      - zookeeper2
-      - zookeeper3
+      - zookeeper
 
   kafka3:
     container_name: kafka3
@@ -120,21 +71,18 @@ services:
     restart: on-failure:3
     environment:
       KAFKA_BROKER_ID: 3
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:12181,zookeeper3:22181
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29092
       KAFKA_CONFLUENT_LICENSE: ${CONFLUENT_LICENSE}
       KAFKA_CONFLUENT_TELEMETRY_ENABLED: "false"
       KAFKA_CONFLUENT_REPORTERS_TELEMETRY_AUTO_ENABLE: "false"
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
-      KAFKA_JMX_PORT: 9994
     volumes:
       - /tmp/cpdocker/volumes/kafka/config:/volumes
       - kafka3-data:/var/lib/kafka/data
     depends_on:
-      - zookeeper1
-      - zookeeper2
-      - zookeeper3
+      - zookeeper
 
   schemaregistry:
     image: confluentinc/cp-schema-registry:VERSION
@@ -150,7 +98,6 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
       SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: none
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
-      SCHEMA_REGISTRY_JMX_PORT: 9993
     depends_on:
       - kafka1
       - kafka2
@@ -174,12 +121,13 @@ services:
       CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
-      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components,/volumes"
       CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
       CONNECT_LOG4J_LOGGERS: org.reflections=ERROR
-      KAFKA_JMX_PORT: 9992
     volumes:
+      - /tmp/cpdocker/volumes/connect:/volumes
       - kafka-connect:/usr/share/confluent-hub-components
+
     depends_on:
       - kafka1
       - kafka2
@@ -196,7 +144,6 @@ services:
       KAFKA_REST_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
       KAFKA_REST_CLIENT_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
       KAFKA_REST_LISTENERS: http://0.0.0.0:8082
-      KAFKA_REST_JMX_PORT: 9991
     depends_on:
       - kafka1
       - kafka2
@@ -231,7 +178,6 @@ services:
       KSQL_KSQL_SERVICE_ID: ksqldb
       KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schemaregistry:8081
       KSQL_LISTENERS: http://0.0.0.0:8088
-      KSQL_JMX_PORT: 9990
     depends_on:
       - kafka1
       - kafka2
@@ -239,12 +185,8 @@ services:
       - schemaregistry
 
 volumes:
-  zookeeper1-data:
-  zookeeper1-txn-logs:
-  zookeeper2-data:
-  zookeeper2-txn-logs:
-  zookeeper3-data:
-  zookeeper3-txn-logs:
+  zookeeper-data:
+  zookeeper-txn-logs:
   kafka1-data:
   kafka2-data:
   kafka3-data:

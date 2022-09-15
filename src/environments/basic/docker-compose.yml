@@ -16,7 +16,6 @@ services:
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
       ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
-      KAFKA_JMX_PORT: 9999
     volumes:
       - /tmp/cpdocker/volumes/zookeeper:/volumes
       - zookeeper1-data:/var/lib/zookeeper/data
@@ -37,7 +36,6 @@ services:
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
       ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
-      KAFKA_JMX_PORT: 9998
     volumes:
       - /tmp/cpdocker/volumes/zookeeper:/volumes
       - zookeeper2-data:/var/lib/zookeeper/data
@@ -58,7 +56,6 @@ services:
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
       ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:12888:13888;zookeeper3:22888:23888
-      KAFKA_JMX_PORT: 9997
     volumes:
       - /tmp/cpdocker/volumes/zookeeper:/volumes
       - zookeeper3-data:/var/lib/zookeeper/data
@@ -77,7 +74,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
-      KAFKA_JMX_PORT: 9996
     volumes:
       - /tmp/cpdocker/volumes/kafka:/volumes
       - kafka1-data:/var/lib/kafka/data
@@ -99,7 +95,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:19092
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
-      KAFKA_JMX_PORT: 9995
     volumes:
       - /tmp/cpdocker/volumes/kafka:/volumes
       - kafka2-data:/var/lib/kafka/data
@@ -121,7 +116,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29092
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       KAFKA_LOG4J_LOGGERS: state.change.logger=INFO
-      KAFKA_JMX_PORT: 9994
     volumes:
       - /tmp/cpdocker/volumes/kafka:/volumes
       - kafka3-data:/var/lib/kafka/data
@@ -144,7 +138,6 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
       SCHEMA_REGISTRY_SCHEMA_COMPATIBILITY_LEVEL: none
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
-      SCHEMA_REGISTRY_JMX_PORT: 9993
     volumes:
       - /tmp/cpdocker/volumes/schemaregistry:/volumes
     depends_on:
@@ -170,10 +163,9 @@ services:
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
-      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components,/volumes
       CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
       CONNECT_LOG4J_LOGGERS: org.reflections=ERROR
-      KAFKA_JMX_PORT: 9992
     volumes:
       - /tmp/cpdocker/volumes/connect:/volumes
       - kafka-connect:/usr/share/confluent-hub-components
@@ -192,7 +184,6 @@ services:
       KAFKA_REST_HOST_NAME: restproxy
       KAFKA_REST_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:19092,kafka3:29092
       KAFKA_REST_LISTENERS: http://0.0.0.0:8082
-      KAFKA_REST_JMX_PORT: 9991
     volumes:
       - /tmp/cpdocker/volumes/restproxy:/volumes
     depends_on:
@@ -229,7 +220,6 @@ services:
       KSQL_KSQL_SERVICE_ID: ksqldb
       KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schemaregistry:8081
       KSQL_LISTENERS: http://0.0.0.0:8088
-      KSQL_JMX_PORT: 9990
     volumes:
       - /tmp/cpdocker/volumes/ksqldb:/volumes
     depends_on:

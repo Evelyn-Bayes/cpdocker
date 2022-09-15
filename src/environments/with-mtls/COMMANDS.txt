@@ -36,17 +36,17 @@ Alter or add a topic level override
                                  Zookeeper
 ################################################################################
 ##### Command
-docker exec -ti zookeeper1 zookeeper-shell zookeeper1:2181
+docker exec -ti zookeeper zookeeper-shell zookeeper:2181
 ##### Documentation
 Start the Zookeeper shell
 
 ##### Command
-docker exec -ti zookeeper1 zookeeper-shell zookeeper1:2181 get /controller
+docker exec -ti zookeeper zookeeper-shell zookeeper:2181 get /controller
 ##### Documentation
 List the current Kafka controller
 
 ##### Command
-docker exec -ti zookeeper1 /bin/bash -c 'echo srvr | ncat zookeeper1 2181'
+docker exec -ti zookeeper /bin/bash -c 'echo srvr | ncat zookeeper 2181'
 ##### Documentation
 Run the four letter word srvr which will list if the Zookeeper is a leader or follower
 

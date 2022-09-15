@@ -2,13 +2,14 @@
 
 curl -s -X PUT -H  "Content-Type:application/json" http://connect:8083/connectors/s3-backup/config \
   -d '{
-  "connector.class": "io.confluent.connect.s3.S3SinkConnector",
+  "connector.class": "io.confluent.connect.s3.source.S3SourceConnector",
+  "confluent.topic.bootstrap.servers": "kafka1:9092",
   "tasks.max": "1",
   "key.converter": "org.apache.kafka.connect.storage.StringConverter",
   "value.converter": "org.apache.kafka.connect.storage.StringConverter",
   "topics": "s3-data",
   "format.class": "io.confluent.connect.s3.format.json.JsonFormat",
-  "flush.size": "1",
+  "flush.size": "100",
   "schema.compatibility": "NONE",
   "s3.bucket.name": "kafka",
   "s3.region": "us-east-1",

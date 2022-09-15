@@ -11,9 +11,7 @@ scrape_configs:
   - job_name: "zookeeper"
     static_configs:
       - targets:
-          - "zookeeper1:9999"
-          - "zookeeper2:9998"
-          - "zookeeper3:9997"
+          - "zookeeper:9999"
         labels:
           env: "PROD"
     relabel_configs:
