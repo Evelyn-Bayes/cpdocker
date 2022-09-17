@@ -3,24 +3,19 @@ docker exec -ti mc sh -c "mc config host add minio http://minio:9000 username pa
 docker exec -ti mc sh -c "mc mb minio/kafka"
 
 # Create the topic
-docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --create --topic s3-data --replication-factor 3 --partitions 3
+docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --create --topic users --replication-factor 3 --partitions 2
 
-# Generate some records
-docker exec -ti schemaregistry kafka-json-schema-console-producer --broker-list kafka1:9092 --property schema.registry.url=http://schemaregistry:8081 --topic s3-data --property value.schema='{"type":"object","properties":{"first-name":{"type":"string"}}}' --property key.schema='{"type":"object","properties":{"last-name":{"type":"string"}}}' --property parse.key=true --property key.separator='|'
+# Generate records
+docker exec -ti connect sh -c "confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:latest"
+docker restart connect
+docker exec -ti connect /bin/bash -c 'curl -vX POST http://connect:8083/connectors --header "Content-Type: application/json" --data @/volumes/datagen_users.json'
 
-{"last-name":"Last1"}|{"first-name":"First1"}
-{"last-name":"Last2"}|{"first-name":"First2"}
-{"last-name":"Last3"}|{"first-name":"First3"}
-{"last-name":"Last4"}|{"first-name":"First4"}
-{"last-name":"Last5"}|{"first-name":"First5"}
-{"last-name":"Last6"}|{"first-name":"First6"}
-{"last-name":"Last7"}|{"first-name":"First7"}
-{"last-name":"Last8"}|{"first-name":"First8"}
-{"last-name":"Last9"}|{"first-name":"First9"}
-{"last-name":"Last10"}|{"first-name":"First10"}
+# Shutdown record generator
+docker exec -ti connect curl -vX DELETE http://connect:8083/connectors/datagen-users
 
-# Consume the records
-docker exec -ti schemaregistry kafka-json-schema-console-consumer --bootstrap-server kafka1:9092 --property schema.registry.url=http://schemaregistry:8081 --topic s3-data --property value.schema='{"type":"object","properties":{"first-name":{"type":"string"}}}' --property key.schema='{"type":"object","properties":{"last-name":{"type":"string"}}}' --property print.key=true --property print.partition=true --property print.offset=true --from-beginning
+# Consume the records from each partition
+docker exec -ti schemaregistry kafka-avro-console-consumer --bootstrap-server kafka1:9092 --topic users --property schema.registry.url=http://schemaregistry:8081 --partition 0 --from-beginning |grep registertime >> partition_0.log
+docker exec -ti schemaregistry kafka-avro-console-consumer --bootstrap-server kafka1:9092 --topic users --property schema.registry.url=http://schemaregistry:8081 --partition 1 --from-beginning |grep registertime >> partition_1.log
 
 # Add and deploy the sink connector
 docker exec -ti connect sh -c "confluent-hub install --no-prompt confluentinc/kafka-connect-s3:latest"
@@ -29,10 +24,10 @@ docker exec -ti minio sh -c "bash /volumes/deploy-sink-connector.sh"
 
 # Cleanup the sink connector and topic
 docker exec -ti connect curl -vX DELETE http://connect:8083/connectors/s3-backup
-docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --delete --topic s3-data
+docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --delete --topic users
 
 # Recreate the topic
-docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --create --topic s3-data --replication-factor 3 --partitions 3
+docker exec -ti kafka1 kafka-topics --bootstrap-server kafka1:9092 --create --topic users --replication-factor 3 --partitions 2
 
 # Add and create the source connector
 docker exec -ti connect sh -c "confluent-hub install --no-prompt confluentinc/kafka-connect-s3-source:latest"
@@ -40,4 +35,5 @@ docker restart connect
 docker exec -ti minio sh -c "bash /volumes/deploy-source-connector.sh"
 
 # Consume the records and validate they match, with the correct partition and maintaining record ordering
-docker exec -ti schemaregistry kafka-json-schema-console-consumer --bootstrap-server kafka1:9092 --property schema.registry.url=http://schemaregistry:8081 --topic test-json --property value.schema='{"type":"object","properties":{"first-name":{"type":"string"}}}' --property key.schema='{"type":"object","properties":{"last-name":{"type":"string"}}}' --property print.key=true --property print.partition=true --property print.offset=true --from-beginning
+docker exec -ti schemaregistry kafka-avro-console-consumer --bootstrap-server kafka1:9092 --topic users --property schema.registry.url=http://schemaregistry:8081 --partition 0 --from-beginning |grep registertime >> partition_0.log
+docker exec -ti schemaregistry kafka-avro-console-consumer --bootstrap-server kafka1:9092 --topic users --property schema.registry.url=http://schemaregistry:8081 --partition 1 --from-beginning |grep registertime >> partition_1.log
