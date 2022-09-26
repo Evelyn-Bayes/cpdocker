@@ -1,7 +1,2 @@
----
-lowercaseOutputName: true
-lowercaseOutputLabelNames: true
-whitelistObjectNames:
-  # Scrap everything
-  - kmf:type=kafka-monitor:offline-runnable-count
-  - kmf.services:type=*,name=*,*
+rules:
+- pattern: ".*"

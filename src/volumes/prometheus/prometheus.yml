@@ -73,3 +73,15 @@ scrape_configs:
         target_label: hostname
         regex: '([^:]+)(:[0-9]+)?'
         replacement: '${1}'
+
+  - job_name: "xinfra"
+    static_configs:
+      - targets:
+          - "xinfra:9989"
+        labels:
+          env: "PROD"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: hostname
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'

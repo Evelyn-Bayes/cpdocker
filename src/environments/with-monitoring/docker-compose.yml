@@ -159,6 +159,20 @@ services:
       - kafka3
       - schemaregistry
 
+  xinfra:
+    container_name: xinfra
+    image: localbuild/xinfra
+    hostname: xinfra
+    environment:
+      KAFKA_OPTS: -javaagent:/jmxexporter/jmx_prometheus_javaagent-0.17.0.jar=9989:/volumes/xinfra.yml
+    volumes:
+      - /tmp/cpdocker/volumes/xinfra:/volumes
+      - /tmp/cpdocker/volumes/jmxexporter:/jmxexporter
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+
   prometheus:
     image: prom/prometheus:v2.36.2
     container_name: prometheus
