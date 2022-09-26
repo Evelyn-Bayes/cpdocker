@@ -11,9 +11,7 @@ scrape_configs:
   - job_name: "zookeeper"
     static_configs:
       - targets:
-          - "zookeeper1:9999"
-          - "zookeeper2:9998"
-          - "zookeeper3:9997"
+          - "zookeeper:9999"
         labels:
           env: "PROD"
     relabel_configs:
@@ -68,6 +66,18 @@ scrape_configs:
     static_configs:
       - targets:
           - "ksqldb:9990"
+        labels:
+          env: "PROD"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: hostname
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'
+
+  - job_name: "xinfra"
+    static_configs:
+      - targets:
+          - "xinfra:9989"
         labels:
           env: "PROD"
     relabel_configs:
